@@ -17,12 +17,6 @@ jobs:
           java-version: 21
           distribution: temurin
 
-      - name: Set version in build.gradle to 23.0 (auto-locate)
-        run: |
-          gradle_file=$(find . -name "build.gradle" | head -n 1)
-          echo "Found gradle file: $gradle_file"
-          sed -i 's/^version = .*/version = "23.0"/' "$gradle_file"
-
       - name: Grant execute permissions to gradlew
         run: chmod +x ./gradlew
 
