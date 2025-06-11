@@ -6,6 +6,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -16,26 +17,25 @@ jobs:
           java-version: 21
           distribution: temurin
 
-      - name: Set version in pom.xml to 23.0
+      - name: Set version in build.gradle to 23.0
         run: |
-          sed -i '0,/<version>.*<\/version>/s//<version>23.0<\/version>/' pom.xml
+          sed -i 's/^version = .*/version = "23.0"/' build.gradle
 
-      - name: Build with branch override
-        run: mvn package --file pom.xml -Dproject.branch=master
+      - name: Grant execute permissions to gradlew
+        run: chmod +x ./gradlew
 
-      - name: Get correct jar
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Get built JAR file
         id: jar
         run: |
           mkdir staging
-          for file in target/*.jar; do
-            if [[ "$(basename "$file")" != original-* ]]; then
-              cp "$file" staging/
-              echo "jar_name=$(basename "$file")" >> "$GITHUB_OUTPUT"
-              break
-            fi
-          done
-      
-      - name: Upload the .jar directly
+          jar_file=$(find build/libs -name "*.jar" ! -name "*-sources.jar" ! -name "*-javadoc.jar" | head -n 1)
+          cp "$jar_file" staging/
+          echo "jar_name=$(basename "$jar_file")" >> "$GITHUB_OUTPUT"
+
+      - name: Upload the .jar artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.jar.outputs.jar_name }}
